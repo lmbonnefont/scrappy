@@ -45,12 +45,11 @@ for product in products:
 
   try:
     price = product.find("span", class_="a-price-whole").text
-    #on enleve les whitespaces et on remplace les virgules par des points en vue de la conversion
     price = price.replace(",",".")
     price = price.replace("\xa0","")
     price = float(price)
   except AttributeError:
-    price = None
+    price = 0
 
   try:
     slug = "https://www.amazon.fr" + product.find("a", class_="a-link-normal a-text-normal")["href"]
@@ -61,12 +60,22 @@ for product in products:
   # uncomment when doing the real shit
   # db.child("amazon").push(data)
 
+# Go through the Data Lake and create a univoque collection of amazon products with related id's
 amazon_products = db.child("amazon").get()
 
 for saved_product in amazon_products.each():
   saved_product_title = saved_product.val()['title']
   hash_object = hashlib.md5(saved_product_title.encode())
-  db.child(f"amazon_to_product/{saved_product_title}").set(hash_object.hexdigest())
+  idKey = hash_object.hexdigest()
+  db.child(f"amazon_to_product/{saved_product_title}").set(idKey)
 
-
+  data = {
+    "amazon_url": saved_product.val()['slug'],
+    "bm_prices": "",
+    "bm_url": "",
+    "model": "",
+  }
+  price_collection = { "date": saved_product.val()['date'], "price": saved_product.val()['price'] }
+  db.child(f"products/{idKey}").set(data)
+  db.child(f"products/{idKey}/amazon_prices").push(price_collection)
 
