@@ -20,6 +20,8 @@ with open('source.html') as html_file:
 
 products = soup.find_all(attrs={"data-index": re.compile("^([\s\d]+)$")})
 
+payload = []
+
 for product in products:
   try:
     title = product.find("span", "a-size-base-plus a-color-base a-text-normal").text
@@ -36,15 +38,12 @@ for product in products:
   except AttributeError:
     slug = None
 
-  print(f"Title is {title}, price is {price}, the url is www.amazon.fr/{slug}")
+  # print(f"Title is {title}, price is {price}, the url is www.amazon.fr/{slug}")
 
-  data = {“title”: title, “price”: price, “slug”: slug, “date”: date.today() }
+  data = {"title": title, "price": price, "slug": slug, "date": date.today() }
+  payload.append(data)
 
-
-
-
-
-
+print(payload)
 
 
 
