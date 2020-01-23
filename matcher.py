@@ -13,6 +13,6 @@ def normaliseString(a):
 
 algoliaTitle = normaliseString(a)
 amazonTitle = normaliseString(b)
-ration = SequenceMatcher(None, a, b).ratio()
+ratio = SequenceMatcher(None, a, b).ratio()
 
 print(ratio)
