@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import pyrebase
+from datetime import date
+import json
 
 pyrebase_config = {
   "apiKey": "AIzaSyCKh0Rg_sQuFH83Ev4eTZ4TxLYYQ2ui59w",
@@ -45,17 +47,22 @@ for product in products:
   except AttributeError:
     slug = None
 
-  print(f"Title is {title}, price is {price}, the url is www.amazon.fr/{slug}")
+  data = {"title": title, "price": price, "slug": slug, "date": str(date.today()) }
+  payload.append(data)
 
-
+json.dumps(payload)
 ## connect to DB
 firebase = pyrebase.initialize_app(pyrebase_config)
 
 # Get a reference to the database service
 db = firebase.database()
 
-db.child("amazon").push(data)
+db.child("amazon").push(payload)
 
 # products = db.child("amazon_products").get()
 # for product in products.each():
 #     print(product.val())
+  # print(f"Title is {title}, price is {price}, the url is www.amazon.fr/{slug}")
+
+
+
