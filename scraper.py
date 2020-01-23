@@ -30,4 +30,10 @@ for product in products:
   except AttributeError:
     price = None
 
-  print(f"Title is {title}, price is {price}")
+  try:
+    slug = product.find("a", class_="a-link-normal a-text-normal")["href"]
+  except AttributeError:
+    slug = None
+
+
+  print(f"Title is {title}, price is {price}, the url is www.amazon.fr/{slug}")
