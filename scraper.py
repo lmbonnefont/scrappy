@@ -4,6 +4,7 @@ import re
 import pyrebase
 import datetime
 import json
+import hashlib
 
 pyrebase_config = {
   "apiKey": "AIzaSyCKh0Rg_sQuFH83Ev4eTZ4TxLYYQ2ui59w",
@@ -57,15 +58,15 @@ for product in products:
     slug = None
 
   data = {"title": title, "price": price, "slug": slug, "date": time }
+  # uncomment when doing the real shit
+  # db.child("amazon").push(data)
 
-# json.dumps(payload)
+amazon_products = db.child("amazon").get()
 
-  db.child("amazon").push(data)
-
-# products = db.child("amazon_products").get()
-# for product in products.each():
-#     print(product.val())
-#   print(f"Title is {title}, price is {price}, the url is www.amazon.fr/{slug}")
+for saved_product in amazon_products.each():
+  saved_product_title = saved_product.val()['title']
+  hash_object = hashlib.md5(saved_product_title.encode())
+  db.child(f"amazon_to_product/{saved_product_title}").set(hash_object.hexdigest())
 
 
 
