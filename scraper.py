@@ -60,7 +60,7 @@ for product in products:
   # uncomment when doing the real shit
   # db.child("amazon").push(data)
 
-# Go through the Data Lake and create a univoque collection of amazon products with related id's
+# Go through the Data Lake and create a unique collection of amazon products with related id's
 amazon_products = db.child("amazon").get()
 
 for saved_product in amazon_products.each():
@@ -75,7 +75,7 @@ for saved_product in amazon_products.each():
     "bm_url": "",
     "model": "",
   }
-  price_collection = { "date": saved_product.val()['date'], "price": saved_product.val()['price'] }
   db.child(f"products/{idKey}").set(data)
+  price_collection = { "date": saved_product.val()['date'], "price": saved_product.val()['price'] }
   db.child(f"products/{idKey}/amazon_prices").push(price_collection)
 

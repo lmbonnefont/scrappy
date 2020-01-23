@@ -1,11 +1,18 @@
-import json
+from difflib import SequenceMatcher
 
-with open('algolia.json') as f:
-    d = json.load(f)
+def normaliseString(a):
+  a = a.replace("(", "")
+  a = a.replace(")", "")
+  a = a.replace("\xa0","")
+  a = a.replace("-", "")
+  a = a.replace("Débloqué", "")
+  a = a.replace("Apple", "")
+  a = a.replace("débloqué", "")
+  a = a.replace("apple", "")
+  return a
 
-print (type(d))
-algolia_products = d["results"][0]["hits"]
+algoliaTitle = normaliseString(a)
+amazonTitle = normaliseString(b)
+ration = SequenceMatcher(None, a, b).ratio()
 
-for item in algolia_products:
-  
-# print(d['results'])
+print(ratio)
