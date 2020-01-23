@@ -2,9 +2,9 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import pyrebase
-import datetime
 import json
-import hashlib
+import matcher
+import data_builder
 
 pyrebase_config = {
   "apiKey": "AIzaSyCKh0Rg_sQuFH83Ev4eTZ4TxLYYQ2ui59w",
@@ -35,47 +35,25 @@ with open('source.html') as html_file:
 
 products = soup.find_all(attrs={"data-index": re.compile("^([\s\d]+)$")})
 
-time = str(datetime.datetime.now())
+#Building the amazon data
+arr_amazon_products = data_builder.data_for_amazon(products)
 
-for product in products:
-  try:
-    title = product.find("span", "a-size-base-plus a-color-base a-text-normal").text
-  except AttributeError:
-    title = None
+# uncomment when doing the real shit to push the data to the amazon table
+# for amazon_product in arr_amazon_products:
+#   db.child("amazon").push(amazon_product)
 
-  try:
-    price = product.find("span", class_="a-price-whole").text
-    price = price.replace(",",".")
-    price = price.replace("\xa0","")
-    price = float(price)
-  except AttributeError:
-    price = 0
 
-  try:
-    slug = "https://www.amazon.fr" + product.find("a", class_="a-link-normal a-text-normal")["href"]
-  except AttributeError:
-    slug = None
-
-  data = {"title": title, "price": price, "slug": slug, "date": time }
-  # uncomment when doing the real shit
-  # db.child("amazon").push(data)
-
-# Go through the Data Lake and create a unique collection of amazon products with related id's
+# Go through the Data Lake and create a unique collection of amazon products with related id's. Push to Algolia_to_product table
 amazon_products = db.child("amazon").get()
-
-for saved_product in amazon_products.each():
-  saved_product_title = saved_product.val()['title']
-  hash_object = hashlib.md5(saved_product_title.encode())
-  idKey = hash_object.hexdigest()
+for amazon_product in amazon_products.each():
+  saved_product_title, idKey = data_builder.data_for_amazon_to_product(amazon_product)
   db.child(f"amazon_to_product/{saved_product_title}").set(idKey)
 
-  data = {
-    "amazon_url": saved_product.val()['slug'],
-    "bm_prices": "",
-    "bm_url": "",
-    "model": "",
-  }
+  #Push the data to the clean product table
+  data = data_builder.data_clean_product(amazon_product)
   db.child(f"products/{idKey}").set(data)
-  price_collection = { "date": saved_product.val()['date'], "price": saved_product.val()['price'] }
+
+  #Push the price inside the price collection of the clean products
+  price_collection = data_builder.price_collection_amazon(amazon_product)
   db.child(f"products/{idKey}/amazon_prices").push(price_collection)
 
