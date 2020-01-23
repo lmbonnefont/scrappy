@@ -46,7 +46,7 @@ def data_clean_product(amazon_product):
     "amazon_url": amazon_product.val()['slug'],
     "bm_prices": "",
     "bm_url": "",
-    "model": "",
+    "model": amazon_product.val()['title'],
   }
   return data
 

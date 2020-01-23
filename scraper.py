@@ -57,3 +57,6 @@ for amazon_product in amazon_products.each():
   price_collection = data_builder.price_collection_amazon(amazon_product)
   db.child(f"products/{idKey}/amazon_prices").push(price_collection)
 
+
+
+#Getting the Algolia results
