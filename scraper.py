@@ -5,6 +5,7 @@ import pyrebase
 import json
 import matcher
 import data_builder
+import datetime
 
 pyrebase_config = {
   "apiKey": "AIzaSyCKh0Rg_sQuFH83Ev4eTZ4TxLYYQ2ui59w",
@@ -38,12 +39,12 @@ products = soup.find_all(attrs={"data-index": re.compile("^([\s\d]+)$")})
 #Building the amazon data
 arr_amazon_products = data_builder.data_for_amazon(products)
 
-# uncomment when doing the real shit to push the data to the amazon table
-# for amazon_product in arr_amazon_products:
-#   db.child("amazon").push(amazon_product)
+#uncomment when doing the real shit to push the data to the amazon table
+for amazon_product in arr_amazon_products:
+  db.child("amazon").push(amazon_product)
 
 
-# Go through the Data Lake and create a unique collection of amazon products with related id's. Push to Algolia_to_product table
+#Go through the Data Lake and create a unique collection of amazon products with related id's. Push to Algolia_to_product table
 amazon_products = db.child("amazon").get()
 for amazon_product in amazon_products.each():
   saved_product_title, idKey = data_builder.data_for_amazon_to_product(amazon_product)
@@ -59,4 +60,48 @@ for amazon_product in amazon_products.each():
 
 
 
-#Getting the Algolia results
+#Getting the Algolia results from the json
+with open('algolia_iphone11.json', 'r') as f:
+  iphones11 = json.load(f)
+
+#Isolate the algolia product info into a dict ("title", "algolia_clean_title", "algolia_price", "bm_url", "date")
+data_algolia = data_builder.data_for_algolia(iphones11)
+
+#Getting the keys and clean title of Amazon
+amazon_products = db.child("amazon_to_product").get()
+
+#Creating a dict with Amazon products{clean_title: id matching}
+dict_amazon_products = {}
+for amazon_product in amazon_products.each():
+  dict_amazon_products[amazon_product.key()] = amazon_product.val()
+
+#As we got listings info from Algolia, several listings title will match an Amazon product.
+#prices_matched_id is a dict storing the ids and the price of the already matched product.
+#We will only keep in this dict the most expansive BM listing to be compared to Amazon product.
+prices_matched_id = {}
+for elt_algolia in data_algolia:
+  for title_amazon in dict_amazon_products:
+    score = matcher.similarity(elt_algolia["algolia_clean_title"], title_amazon)
+    #This score is based on observation. You can play with it. If you lower it to 0.92 the matches are not good.
+    if score > 0.94:
+      #If the id is not in the already matched id we add it to the dict
+      if dict_amazon_products[title_amazon] not in prices_matched_id:
+        prices_matched_id[dict_amazon_products[title_amazon]] = elt_algolia["algolia_price"]
+      #If the id is found in the dict, we check if the listing is more expansive than the one we already matched.
+      # We replace it in the dict if so.
+      else:
+        data_builder.is_listing_more_expansive(prices_matched_id, elt_algolia, dict_amazon_products[title_amazon])
+
+      #We update the bm url. This is crade but it's late right now.
+      db.child(f"products/{dict_amazon_products[title_amazon]}").update({"bm_url": elt_algolia["bm_url"]})
+
+#We push the prices BM corresponding to the most expansive listings
+for match in prices_matched_id:
+  print(match)
+  db.child(f"products/{match}/bm_prices").push({"date": str(datetime.datetime.now()), "value": prices_matched_id[match]})
+
+
+
+
+
+

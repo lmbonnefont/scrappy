@@ -34,7 +34,7 @@ def data_for_amazon(products):
 
 def data_for_amazon_to_product(amazon_product):
     #creation of the title
-  saved_product_title = amazon_product.val()['title']
+  saved_product_title = amazon_product.val()['title_clean']
   # creation of the id
   hash_object = hashlib.md5(saved_product_title.encode())
   idKey = hash_object.hexdigest()
@@ -52,8 +52,38 @@ def data_clean_product(amazon_product):
 
 def price_collection_amazon(amazon_product):
   price = {"date": amazon_product.val()['date'],
-          "price": amazon_product.val()['price']}
+          "value": amazon_product.val()['price']}
   return price
+
+def price_collection_algolia(algolia_product):
+  price = {"date": algolia_product["date"],
+           "value": algolia_product["algolia_price"]
+  }
+  return price
+
+def data_for_algolia(dict):
+  time = str(datetime.datetime.now())
+  results = []
+  number_of_results = len(dict["results"][0]["hits"])
+  for i in range(0,number_of_results):
+    algolia_title = dict["results"][0]["hits"][i]["title"]
+    algolia_clean_title = matcher.normaliseString(algolia_title)
+    algolia_price = dict["results"][0]["hits"][i]["price"]
+    bm_url = "https://www.backmarket.fr/" + dict["results"][0]["hits"][i]["slug"]
+    data_algolia = {"title":algolia_title, "algolia_clean_title":algolia_clean_title, "algolia_price": algolia_price, "bm_url": bm_url, "date": time}
+    results.append(data_algolia)
+  return results
+
+def is_listing_more_expansive(dict_matched_id, elt_algolia, key_matched_id):
+  if dict_matched_id[key_matched_id] < elt_algolia["algolia_price"]:
+    dict_matched_id[key_matched_id] = elt_algolia["algolia_price"]
+  return dict_matched_id
+
+
+
+
+
+
 
 
 

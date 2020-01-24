@@ -4,13 +4,16 @@ def normaliseString(a):
   a = a.replace("(", "")
   a = a.replace(")", "")
   a = a.replace("\xa0","")
+  a = a.replace(" - ", "")
   a = a.replace("-", "")
+  a = a.replace("  "," ")
   a = a.replace("Débloqué", "")
   a = a.replace("Apple ", "")
   a = a.replace("débloqué ", "")
   a = a.replace("apple ", "")
   a = a.replace("Reconditionné", "")
   a = a.replace("reconditionné", "")
+  a = a.strip()
   return a
 
 def normaliseNumber(num):
@@ -19,7 +22,5 @@ def normaliseNumber(num):
   return num
 
 
-def matcher(algolia, amazon):
-  algoliaTitle = normaliseString(algoliaTitle)
-  amazonTitle = normaliseString(amazonTitle)
-  return SequenceMatcher(None, a, b).ratio()
+def similarity(algolia, amazon):
+  return SequenceMatcher(None, algolia, amazon).ratio()
