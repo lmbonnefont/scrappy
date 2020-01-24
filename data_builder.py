@@ -68,12 +68,6 @@ def price_collection_amazon(amazon_product):
           "value": amazon_product.val()['price']}
   return price
 
-def price_collection_algolia(algolia_product):
-  price = {"date": algolia_product["date"],
-           "value": algolia_product["algolia_price"]
-  }
-  return price
-
 def data_for_algolia(dict):
   time = str(datetime.datetime.now())
   results = []

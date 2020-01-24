@@ -62,10 +62,10 @@ for amazon_product in amazon_products.each():
 
 #Getting the Algolia results from the json
 with open('algolia.json', 'r') as f:
-  iphones11 = json.load(f)
+  payload_algolia = json.load(f)
 
 #Isolate the algolia product info into a dict ("title", "algolia_clean_title", "algolia_price", "bm_url", "date")
-data_algolia = data_builder.data_for_algolia(iphones11)
+data_algolia = data_builder.data_for_algolia(payload_algolia)
 
 #Getting the keys and clean title of Amazon
 amazon_products = db.child("amazon_to_product").get()
@@ -102,7 +102,6 @@ for elt_algolia in data_algolia:
       break
 
   if not found_match:
-    print(elt_algolia)
     #Pushing clean Algolia products to product table
     data, idKey = data_builder.data_clean_product_algolia(elt_algolia)
     db.child(f"products/{idKey}").set(data)
@@ -110,6 +109,7 @@ for elt_algolia in data_algolia:
     db.child(f"products/{idKey}/bm_prices").push({"date": str(datetime.datetime.now()), "value": elt_algolia["algolia_price"]})
 
 #We push the prices BM corresponding to the most expansive listings
+print("Les ids matchés sont:")
 for match in prices_matched_id:
   #ids of the products matched
   print(match)
