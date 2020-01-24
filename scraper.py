@@ -31,37 +31,37 @@ db = firebase.database()
 # f.write(source.text)
 # f.close
 
-with open('source.html') as html_file:
-  soup = BeautifulSoup(html_file, 'lxml')
+# with open('source.html') as html_file:
+#   soup = BeautifulSoup(html_file, 'lxml')
 
-products = soup.find_all(attrs={"data-index": re.compile("^([\s\d]+)$")})
+# products = soup.find_all(attrs={"data-index": re.compile("^([\s\d]+)$")})
 
-#Building the amazon data
-arr_amazon_products = data_builder.data_for_amazon(products)
+# #Building the amazon data
+# arr_amazon_products = data_builder.data_for_amazon(products)
 
-#uncomment when doing the real shit to push the data to the amazon table
-for amazon_product in arr_amazon_products:
-  db.child("amazon").push(amazon_product)
+# #uncomment when doing the real shit to push the data to the amazon table
+# for amazon_product in arr_amazon_products:
+#   db.child("amazon").push(amazon_product)
 
 
-#Go through the Data Lake and create a unique collection of amazon products with related id's. Push to Algolia_to_product table
-amazon_products = db.child("amazon").get()
-for amazon_product in amazon_products.each():
-  saved_product_title, idKey = data_builder.data_for_amazon_to_product(amazon_product)
-  db.child(f"amazon_to_product/{saved_product_title}").set(idKey)
+# #Go through the Data Lake and create a unique collection of amazon products with related id's. Push to Algolia_to_product table
+# amazon_products = db.child("amazon").get()
+# for amazon_product in amazon_products.each():
+#   saved_product_title, idKey = data_builder.data_for_amazon_to_product(amazon_product)
+#   db.child(f"amazon_to_product/{saved_product_title}").set(idKey)
 
-  #Push the data to the clean product table
-  data = data_builder.data_clean_product(amazon_product)
-  db.child(f"products/{idKey}").set(data)
+#   #Push the data to the clean product table
+#   data = data_builder.data_clean_product(amazon_product)
+#   db.child(f"products/{idKey}").set(data)
 
-  #Push the price inside the price collection of the clean products
-  price_collection = data_builder.price_collection_amazon(amazon_product)
-  db.child(f"products/{idKey}/amazon_prices").push(price_collection)
+#   #Push the price inside the price collection of the clean products
+#   price_collection = data_builder.price_collection_amazon(amazon_product)
+#   db.child(f"products/{idKey}/amazon_prices").push(price_collection)
 
 
 
 #Getting the Algolia results from the json
-with open('algolia.json', 'r') as f:
+with open('algolia_saved.json', 'r') as f:
   payload_algolia = json.load(f)
 
 #Isolate the algolia product info into a dict ("title", "algolia_clean_title", "algolia_price", "bm_url", "date")
@@ -109,6 +109,7 @@ for elt_algolia in data_algolia:
     db.child(f"products/{idKey}/bm_prices").push({"date": str(datetime.datetime.now()), "value": elt_algolia["algolia_price"]})
 
 #We push the prices BM corresponding to the most expansive listings
+print(f"Il y a {len(prices_matched_id)} matchs")
 print("Les ids matchés sont:")
 for match in prices_matched_id:
   #ids of the products matched

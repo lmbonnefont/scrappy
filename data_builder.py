@@ -68,10 +68,12 @@ def price_collection_amazon(amazon_product):
           "value": amazon_product.val()['price']}
   return price
 
+
 def data_for_algolia(dict):
   time = str(datetime.datetime.now())
   results = []
   number_of_results = len(dict["results"][0]["hits"])
+  print(number_of_results)
   for i in range(0,number_of_results):
     algolia_title = dict["results"][0]["hits"][i]["title"]
     algolia_clean_title = matcher.normaliseString(algolia_title)
