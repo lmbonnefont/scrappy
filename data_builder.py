@@ -32,14 +32,17 @@ def data_for_amazon(products):
   return arr_data
 
 
+def get_id(clean_title):
+  hash_object = hashlib.md5(clean_title.encode())
+  idKey = hash_object.hexdigest()
+  return idKey
+
 def data_for_amazon_to_product(amazon_product):
     #creation of the title
   saved_product_title = amazon_product.val()['title_clean']
   # creation of the id
-  hash_object = hashlib.md5(saved_product_title.encode())
-  idKey = hash_object.hexdigest()
+  idKey = get_id(saved_product_title)
   return(saved_product_title,idKey)
-
 
 def data_clean_product(amazon_product):
   data = {
@@ -49,6 +52,16 @@ def data_clean_product(amazon_product):
     "model": amazon_product.val()['title'],
   }
   return data
+
+def data_clean_product_algolia(elt_algolia):
+  data = {
+    "amazon_url": "",
+    "bm_prices": "",
+    "bm_url": elt_algolia["bm_url"],
+    "model": elt_algolia["algolia_clean_title"],
+  }
+  idKey = get_id(data["model"])
+  return (data,idKey)
 
 def price_collection_amazon(amazon_product):
   price = {"date": amazon_product.val()['date'],

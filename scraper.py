@@ -61,7 +61,7 @@ for amazon_product in amazon_products.each():
 
 
 #Getting the Algolia results from the json
-with open('algolia_iphone11.json', 'r') as f:
+with open('algolia.json', 'r') as f:
   iphones11 = json.load(f)
 
 #Isolate the algolia product info into a dict ("title", "algolia_clean_title", "algolia_price", "bm_url", "date")
@@ -80,10 +80,15 @@ for amazon_product in amazon_products.each():
 #We will only keep in this dict the most expansive BM listing to be compared to Amazon product.
 prices_matched_id = {}
 for elt_algolia in data_algolia:
+
+  found_match = False
+
   for title_amazon in dict_amazon_products:
     score = matcher.similarity(elt_algolia["algolia_clean_title"], title_amazon)
-    #This score is based on observation. You can play with it. If you lower it to 0.92 the matches are not good.
+    #This threesold is based on observation. You can play with it. If you lower it to 0.92 the matches are not good.
     if score > 0.94:
+      #We say that we found a match to no push a new product
+      found_match = True
       #If the id is not in the already matched id we add it to the dict
       if dict_amazon_products[title_amazon] not in prices_matched_id:
         prices_matched_id[dict_amazon_products[title_amazon]] = elt_algolia["algolia_price"]
@@ -91,12 +96,22 @@ for elt_algolia in data_algolia:
       # We replace it in the dict if so.
       else:
         data_builder.is_listing_more_expansive(prices_matched_id, elt_algolia, dict_amazon_products[title_amazon])
-
       #We update the bm url. This is crade but it's late right now.
       db.child(f"products/{dict_amazon_products[title_amazon]}").update({"bm_url": elt_algolia["bm_url"]})
 
+      break
+
+  if not found_match:
+    print(elt_algolia)
+    #Pushing clean Algolia products to product table
+    data, idKey = data_builder.data_clean_product_algolia(elt_algolia)
+    db.child(f"products/{idKey}").set(data)
+    #Pushing prices to Algolia prices
+    db.child(f"products/{idKey}/bm_prices").push({"date": str(datetime.datetime.now()), "value": elt_algolia["algolia_price"]})
+
 #We push the prices BM corresponding to the most expansive listings
 for match in prices_matched_id:
+  #ids of the products matched
   print(match)
   db.child(f"products/{match}/bm_prices").push({"date": str(datetime.datetime.now()), "value": prices_matched_id[match]})
 
